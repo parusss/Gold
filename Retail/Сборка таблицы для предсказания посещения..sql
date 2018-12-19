@@ -1,7 +1,4 @@
 
-Select Distinct [CollectionID],Name FROM [Gold585].[dbo].[Purchase] 
-order by  [CollectionID]
-
 drop table TempPurch
 
 SELECT  CAST([PurchaseDateTime] as DATE) [PurchaseDate]
@@ -13,8 +10,8 @@ SELECT  CAST([PurchaseDateTime] as DATE) [PurchaseDate]
 	  ,[Percent]
 	  ,[labels]
       ,([PurchaseCode]) 
-	  ,([Quantity]) 
-      ,([SummaAfterDiscount]) [SummaAfterDiscount]
+	  ,(CAST(IIF([Quantity] = '','0',replace([Quantity],',','.')) as float)) [Quantity]
+      ,(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)) [SummaAfterDiscount]
 	  ,(IIF(Month([PurchaseDateTime])=1,1,0)) M1
 	  ,(IIF(Month([PurchaseDateTime])=2,1,0)) M2
 	  ,(IIF(Month([PurchaseDateTime])=3,1,0)) M3
@@ -27,11 +24,11 @@ SELECT  CAST([PurchaseDateTime] as DATE) [PurchaseDate]
 	  ,(IIF(Month([PurchaseDateTime])=10,1,0)) M10
 	  ,(IIF(Month([PurchaseDateTime])=11,1,0)) M11
 	  ,(IIF(Month([PurchaseDateTime])=12,1,0)) M12
-	  ,(IIF([SummaAfterDiscount] <1000,1,0)) P1k
-	  ,(IIF([SummaAfterDiscount] >=1000 and [SummaAfterDiscount] <3000,1,0)) P3k
-	  ,(IIF([SummaAfterDiscount] >=3000 and [SummaAfterDiscount] <6000,1,0)) P6k
-	  ,(IIF([SummaAfterDiscount] >=6000 and [SummaAfterDiscount] <12000,1,0)) P12k
-	  ,(IIF([SummaAfterDiscount] >=12000,1,0)) P50k
+	  ,(IIF(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)<1000,1,0)) P1k
+	  ,(IIF(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)>=1000 and CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float) <3000,1,0)) P3k
+	  ,(IIF(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)>=3000 and CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float) <6000,1,0)) P6k
+	  ,(IIF(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)>=6000 and CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float) <12000,1,0)) P12k
+	  ,(IIF(CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float)>=12000,1,0)) P50k
       ,[MaterialID]
       ,[Name]
       ,[GroupID]
@@ -119,17 +116,20 @@ SELECT  CAST([PurchaseDateTime] as DATE) [PurchaseDate]
 	  into TempPurch
   FROM [Gold585].[dbo].[Purchase] a
   Left join NewSMSType b on a.text = b.TEXT
-  WHERE [GroupID] Not in (283,1696)  --and [SummaAfterDiscount] > 0 --and tpg_585 not in (N'СИ_ПОДАРКИ')
+  WHERE [GroupID] Not in (283,1696)  --and CAST(IIF([SummaAfterDiscount] = '','0',replace([SummaAfterDiscount],',','.')) as float) > 0 --and tpg_585 not in (N'СИ_ПОДАРКИ')
   and PartnerID <> 0 and Name NOT Like ('Футляр%')
   Order BY PartnerID, [PurchaseDate]
- -- Select top 100 * from TempPurch where PartnerID = 5170116 order by [PurchaseDate]
- Select Max(PurchaseDate) From TempPurch
- Select Count(DISTINCT PurchaseCode) SumP, EOMONTH(PurchaseDate) Period, Sum(SMS) SMS From TempPurch Group BY EOMONTH(PurchaseDate) order by EOMONTH(PurchaseDate)
 
- Select TOP 100 * FROM TempPurch1
---drop table TempPurch1
+--Выполняется 10 минут
 
---drop table Temp11
+ --Select top 100 * from TempPurch where PartnerID = 5170116 order by [PurchaseDate] 
+ --Select Max(PurchaseDate) From TempPurch
+ --Select Count(DISTINCT PurchaseCode) SumP, EOMONTH(PurchaseDate) Period, Sum(SMS) SMS From TempPurch Group BY EOMONTH(PurchaseDate) order by EOMONTH(PurchaseDate)
+
+ --Select TOP 100 * FROM TempPurch1
+ --drop table TempPurch1
+
+drop table Temp11
 Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex],[CityID],BirthDate, SMS SMS_1,b.LastDate, DATEDIFF(DAY,b.LastDate, a.[PurchaseDate]) FromLastPurchM, b.NEXTDate,
 	AVG(SMS) SMS,SUM([Quantity]) [Quantity],SUM([SummaAfterDiscount]) [SummaAfterDiscount],
 	SUM(M1) M1,SUM(M2) M2,SUM(M3) M3,SUM(M4) M4,SUM(M5) M5,SUM(M6) M6,SUM(M7) M7,SUM(M8) M8,SUM(M9) M9,SUM(M10) M10,SUM(M11) M11,SUM(M12) M12,
@@ -144,10 +144,10 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
 	from TempPurch a left join TempDate2 b on a.[PartnerID] = b.[PartnerID] and a.[PurchaseDate] = b.[PurchaseDate]
 	group by a.[PartnerID], a.[PurchaseDate],[Sex],[CityID], BirthDate, DATEDIFF(DAY,b.LastDate, a.[PurchaseDate]),b.LastDate,NEXTDate,SMS
 -- Select top 100 * from Temp11 where PartnerID = 5170116 order by [PurchaseDate]
-   Select Count(DISTINCT PurchaseCode) SumP, EOMONTH(PurchaseDate) Period, Sum(SMS) SMS From Temp11 Group BY EOMONTH(PurchaseDate) order by EOMONTH(PurchaseDate)
+-- Select Count(DISTINCT PurchaseCode) SumP, EOMONTH(PurchaseDate) Period, Sum(SMS) SMS From Temp11 Group BY EOMONTH(PurchaseDate) order by EOMONTH(PurchaseDate)
 
 
---drop table TempPurch2   --Данные для обучения
+ drop table TempPurch2   --Данные для обучения
   Select DISTINCT a.[PurchaseDate],a.[PurchaseCode], a.[PartnerID],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
  ,MIN(b.[PurchaseDate]) FirstVisit
  ,AVG(b.FromLastPurchM) AVGFromLastPurchM
@@ -219,18 +219,19 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   group by  a.[PartnerID], a.[PurchaseDate],a.[PurchaseCode],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
 
 --  Select top 100 * from TempPurch2 where PartnerID = 5170116 order by [PurchaseDate]
-    Select top 100 * from ##Temp1 where PartnerID = 5170116 order by [PurchaseDate]
+--  Select top 100 * from ##Temp1 where PartnerID = 5170116 order by [PurchaseDate]
   
   
-	--drop table TempPurch3   --Данные для прогнозирования
-	  Select a.[PurchaseDate], a.[PurchaseCode], a.[PartnerID],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
-	 ,MIN(b.[PurchaseDate]) FirstVisit
-	 ,AVG(b.FromLastPurchM) AVGFromLastPurchM
-	 ,COUNT(b.[PurchaseDate]) QNTVisits
-	 ,Sum(b.SMS) SumSMS
-	 ,SUM(b.Quantity) SumQuantity
-	 ,SUM(b.[SummaAfterDiscount]) SumSumma
-	 ,AVG(b.[SummaAfterDiscount]) AVGSumma
+	drop table TempPurch3   --Данные для прогнозирования
+	
+	Select a.[PurchaseDate], a.[PurchaseCode], a.[PartnerID],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
+		,MIN(b.[PurchaseDate]) FirstVisit
+		,AVG(b.FromLastPurchM) AVGFromLastPurchM
+		,COUNT(b.[PurchaseDate]) QNTVisits
+		,Sum(b.SMS) SumSMS
+		,SUM(b.Quantity) SumQuantity
+		,SUM(b.[SummaAfterDiscount]) SumSumma
+		,AVG(b.[SummaAfterDiscount]) AVGSumma
 		,SUM(b.M1) SUMM1
 		,SUM(b.M2) SUMM2
 		,SUM(b.M3) SUMM3
@@ -289,28 +290,28 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
 		,SUM(b.Sertifikat) SUMSertifikat
 		,SUM(b.SellOut) SUMSellOut
 		,SUM(b.Shock) SUMShock
-		into TempPurch3
-	  FROM Temp11 a left join Temp11 b on b.[PartnerID] = a.[PartnerID] and a.[PurchaseDate] >= b.[PurchaseDate]
-	  group by a.[PurchaseDate],a.[PurchaseCode], a.[PartnerID],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
+	into TempPurch3
+	FROM Temp11 a left join Temp11 b on b.[PartnerID] = a.[PartnerID] and a.[PurchaseDate] >= b.[PurchaseDate]
+	group by a.[PurchaseDate],a.[PurchaseCode], a.[PartnerID],a.[Sex],a.[CityID], a.BirthDate,a.LastDate,a.NEXTDate,a.SMS_1
   
 
-   Select EOMONTH([PurchaseDate]) Period, COUNT(PurchaseCode) SumP, SUM(SumSMS) SumSMS  from TempPurch3 Where QNTVisits =1 Group by EOMONTH([PurchaseDate]) Order BY EOMONTH([PurchaseDate])
-   Select EOMONTH([PurchaseDate]) Period, COUNT(PurchaseCode) SumP, SUM(IIF(SumSMS=0,0,1)) SumSMS  from TempPurch3 Where QNTVisits >1 Group by EOMONTH([PurchaseDate]) Order BY EOMONTH([PurchaseDate])
---  Select top 100 * from TempPurch3 where PartnerID = 5170116 order by [PurchaseDate]
+ --  Select EOMONTH([PurchaseDate]) Period, COUNT(PurchaseCode) SumP, SUM(SumSMS) SumSMS  from TempPurch3 Where QNTVisits =1 Group by EOMONTH([PurchaseDate]) Order BY EOMONTH([PurchaseDate])
+ --  Select EOMONTH([PurchaseDate]) Period, COUNT(PurchaseCode) SumP, SUM(IIF(SumSMS=0,0,1)) SumSMS  from TempPurch3 Where QNTVisits >1 Group by EOMONTH([PurchaseDate]) Order BY EOMONTH([PurchaseDate])
+ --  Select top 100 * from TempPurch3 where PartnerID = 5170116 order by [PurchaseDate]
     
 
-  --Select TOP 100 * from TempPurch3 where PartnerID = 4284242
---drop table TempT
+ --Select TOP 100 * from TempPurch3 where PartnerID = 4284242
+ --drop table TempT
 
   /*
   Select Distinct [PurchaseDate],PartnerID 
   into TempT
   from TempPurch
   */
-  --drop table TempT
-   Select PartnerID,[CityID], IIF(LEAD(PartnerID,1,NULL) over (partition BY PartnerID  ORDER BY PartnerID,[PurchaseDate]) = PartnerID,0,1) LastP
-  ,QNTVisits, DATEDIFF(DAY, [PurchaseDate], '20181201') Dif
-   into TempT
+  drop table TempT
+  Select PartnerID,[CityID], [PurchaseDate], IIF(LEAD(PartnerID,1,NULL) over (partition BY PartnerID  ORDER BY PartnerID,[PurchaseDate]) = PartnerID,0,1) LastP
+  ,QNTVisits, DATEDIFF(DAY, [PurchaseDate], '20181231') Dif
+  into TempT
   from [TempPurch3]
   Where [PurchaseDate] > '20130101'
   order by PartnerID,[PurchaseDate]
@@ -332,14 +333,13 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   
   -- Select top 100 * from ##TempDate where PartnerID = 5170116 order by [PurchaseDate]
 
-
+  --Select TOP 10 * from TempDate
   drop table TempDate
    Select DISTINCT a.PurchaseDate, a.PartnerID
---   ,IIF(LAG(a.PartnerID,1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]) = a.PartnerID,
---	LAG(a.[PurchaseDate],1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]),NULL) LastDate
-
---  ,IIF(LEAD(a.PartnerID,1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]) = a.PartnerID,
---	LEAD(a.[PurchaseDate],1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]),NULL) NEXTDate
+--  ,IIF(LAG(a.PartnerID,1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]) = a.PartnerID
+--	,LAG(a.[PurchaseDate],1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]),NULL) LastDate
+--  ,IIF(LEAD(a.PartnerID,1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]) = a.PartnerID
+--	,LEAD(a.[PurchaseDate],1,NULL) over (ORDER BY a.PartnerID,a.[PurchaseDate]),NULL) NEXTDate
   ,IIF(b.[PurchaseDate] IS NOT NULL,1,0) GodNazad
   ,IIF(c.[PurchaseDate] IS NOT NULL,1,0) God2Nazad
   ,IIF(d.[PurchaseDate] IS NOT NULL,1,0) God3Nazad
@@ -351,222 +351,12 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   left join TempT d on a.PartnerID = d.PartnerID and CAST(a.[PurchaseDate]  as DATE)> CAST(d.[PurchaseDate]  as DATE)
   and (DATEDIFF(DAY,d.[PurchaseDate] ,a.[PurchaseDate])) BETWEEN 1075 and 1115
 
+  --Выполняется пол часа
+
  -- Select top 100 * from ##TempDate where PartnerID = 5170116 order by [PurchaseDate]
   
 
-	drop table ForPredict
-	--удалить ForPredict и переименовать ForPredict1
-  SELECT  a.[PurchaseDate]
-      ,a.[PartnerID]
-	  ,a.[BirthDate]
-	  ,a.[Sex]
-	  ,a.[CityID]
-	  ,SMS
-	  ,b.SumSMS
-	  ,b.SumQuantity
-	  ,b.QNTVisits
-      ,[PurchaseCode]
-      ,[SummaAfterDiscount]
-	  ,b.FirstVisit
-	  ,t2.LastDate
-	  ,t2.NEXTDate
-	  ,t1.GodNazad
-	  ,t1.God2Nazad
-	  ,t1.God3Nazad
-	 ,b.SUMM1
-	 ,b.SUMM2
-	 ,b.SUMM3
-	 ,b.SUMM4
-	 ,b.SUMM5
-	 ,b.SUMM6
-	 ,b.SUMM7
-	 ,b.SUMM8
-	 ,b.SUMM9
-	 ,b.SUMM10
-	 ,b.SUMM11
-	 ,b.SUMM12
-	 ,b.SumSumma
-	 ,b.AVGSumma
-	,b.SUMP1k
-	,b.SUMP3k
-	,b.SUMP6k
-	,b.SUMP12k
-	,b.SUMP50k
-	,CASE WHEN [SummaAfterDiscount] <1000 THEN 'P1k'
-		  WHEN [SummaAfterDiscount] >=1000 and [SummaAfterDiscount] <3000 THEN 'P3k'
-		  WHEN [SummaAfterDiscount] >=3000 and [SummaAfterDiscount] <6000 THEN 'P6k'
-		  WHEN [SummaAfterDiscount] >=6000 and [SummaAfterDiscount] <12000 THEN 'P12k'
-		  WHEN [SummaAfterDiscount] >=120000 THEN 'P50k' end PriceGroup
-      ,[MaterialID]
-      ,[Name]
-      ,[GroupID]
-      ,[CollectionID]
-	  ,b.SUMKolco
-	  ,b.SUMSERGI
-	  ,b.SUMPODVES
-	  ,b.SUMCEP
-	  ,b.SUMBRASLET
-	  ,b.SUMKOLE
-	  ,[WearType]
-	  ,b.SUMCheap
-	  ,b.SUMExpensive
-	  ,b.SUMPremium
-	  ,b.SUMMiddle
-	  ,[PriceSegment]
-	  ,b.SUMZoloto
-	  ,b.SUMSerebro
-	  ,[Metal]
-	  ,b.SUMColorBlack
-	  ,b.SUMColorRed
-	  ,b.SUMColorYellow
-	  ,b.SUMColorWhite
-	  ,b.SUMColor3
-	  ,b.SUMColor2 
-	  ,[MetalColor]
-	  ,b.SUMGroupBaza
-	  ,b.SUMGroupClassic
-	  ,b.SUMGroupModa
-	  ,b.SUMGroupModul
-	  ,b.SUMGroupSouvenir
-	  ,b.SUMGroupTrend  
-	  ,[StylisticGroup]
-	  --для прогноза
-	,с.SumSMS SumSMSP
-	,с.SumQuantity SumQuantityP 
-	,с.QNTVisits QNTVisitsP
-	,с.SUMM1 SUMM1P
-	,с.SUMM2 SUMM2P
-	,с.SUMM3 SUMM3P 
-	,с.SUMM4 SUMM4P
-	,с.SUMM5 SUMM5P
-	,с.SUMM6 SUMM6P
-	,с.SUMM7 SUMM7P
-	,с.SUMM8 SUMM8P
-	,с.SUMM9 SUMM9P
-	,с.SUMM10 SUMM10P
-	,с.SUMM11 SUMM11P
-	,с.SUMM12 SUMM12P
-	,с.SumSumma SumSummaP
-	,с.AVGSumma AVGSummaP
-	,с.SUMP1k SUMP1kP
-	,с.SUMP3k SUMP3kP
-	,с.SUMP6k SUMP6kP
-	,с.SUMP12k SUMP12kP
-	,с.SUMP50k SUMP50kP
-	,с.SUMKolco SUMKolcoP
-	,с.SUMSERGI SUMSERGIP
-	,с.SUMPODVES SUMPODVESP
-	,с.SUMCEP SUMCEPP
-	,с.SUMBRASLET SUMBRASLETP
-	,с.SUMKOLE SUMKOLEP
-	,с.SUMCheap SUMCheapP
-	,с.SUMExpensive SUMExpensiveP
-	,с.SUMPremium SUMPremiumP
-	,с.SUMMiddle SUMMiddleP
-	,с.SUMZoloto SUMZolotoP
-	,с.SUMSerebro SUMSerebroP
-	,с.SUMColorBlack SUMColorBlackP
-	,с.SUMColorRed SUMColorRedP
-	,с.SUMColorYellow SUMColorYellowP
-	,с.SUMColorWhite SUMColorWhiteP
-	,с.SUMColor3 SUMColor3P
-	,с.SUMColor2 SUMColor2P
-	,с.SUMGroupBaza SUMGroupBazaP
-	,с.SUMGroupClassic SUMGroupClassicP
-	,с.SUMGroupModa SUMGroupModaP
-	,с.SUMGroupModul SUMGroupModulP
-	,с.SUMGroupSouvenir SUMGroupSouvenirP
-	,с.SUMGroupTrend SUMGroupTrendP
-	  into ForPredict1
-  FROM TempPurch1 a  left join TempPurch2 b on a.PartnerID = b.PartnerID and a.[PurchaseDate] = b.[PurchaseDate]
-  left join TempPurch3 с on a.PartnerID = с.PartnerID and a.[PurchaseDate] = с.[PurchaseDate]
-  left join TempDate t1 on a.PartnerID = t1.PartnerID and a.[PurchaseDate] = t1.[PurchaseDate]
-  left join ##TempDate t2 on a.PartnerID = t1.PartnerID and a.[PurchaseDate] = t1.[PurchaseDate]
-
-  --Сбор данных по месячной сетке
-
---чеки по сетке
-  Select [ind],[Period],Month([Period]) Month
-	  ,(PurchaseDate) PurchaseDate 
-	  ,PurchaseCode
-      ,[PartnerID]
-      ,[Sex]
-      ,[CityID]
-      ,[BirthDate]
-      ,([LastDate]) [LastDate]
-      ,([NEXTDate]) [NEXTDate]
-      ,([SMS_1]) [SMS_1] --если был одиин визит по смс, то дальше всегда будет 1
-      ,([FirstVisit]) [FirstVisit]
-      ,([AVGFromLastPurchM]) [AVGFromLastPurchM]
-      ,([QNTVisits]) [QNTVisits]
-      ,([SumSMS]) [SumSMS]
-      ,([SumQuantity]) [SumQuantity]
-      ,([SumSumma]) [SumSumma]
-      ,([AVGSumma]) [AVGSumma]
-      ,([SUMM1]) [SUMM1]
-      ,([SUMM2]) [SUMM2]
-      ,([SUMM3]) [SUMM3]
-      ,([SUMM4]) [SUMM4]
-      ,([SUMM5]) [SUMM5]
-      ,([SUMM6]) [SUMM6]
-      ,([SUMM7]) [SUMM7]
-      ,([SUMM8]) [SUMM8] 
-      ,([SUMM9]) [SUMM9] 
-      ,([SUMM10]) [SUMM10]
-      ,([SUMM11]) [SUMM11]
-      ,([SUMM12]) [SUMM12]
-      ,([SUMP1k]) [SUMP1k]
-      ,([SUMP3k]) [SUMP3k]
-      ,([SUMP6k]) [SUMP6k]
-      ,([SUMP12k]) [SUMP12k]
-      ,([SUMP50k]) [SUMP50k]
-      ,([SUMKolco]) [SUMKolco]
-      ,([SUMSERGI]) [SUMSERGI]
-      ,([SUMPODVES]) [SUMPODVES]
-      ,([SUMCEP]) [SUMCEP]
-      ,([SUMBRASLET]) [SUMBRASLET]
-      ,([SUMKOLE]) [SUMKOLE]
-      ,([SUMCheap]) [SUMCheap]
-      ,([SUMExpensive]) [SUMExpensive]
-      ,([SUMPremium]) [SUMPremium]
-      ,([SUMMiddle]) [SUMMiddle]
-      ,([SUMZoloto]) [SUMZoloto]
-      ,([SUMSerebro]) [SUMSerebro]
-      ,([SUMColorBlack]) [SUMColorBlack]
-      ,([SUMColorRed]) [SUMColorRed]
-      ,([SUMColorYellow]) [SUMColorYellow]
-      ,([SUMColorWhite]) [SUMColorWhite]
-      ,([SUMColor3]) [SUMColor3]
-      ,([SUMColor2]) [SUMColor2]
-      ,([SUMGroupBaza]) [SUMGroupBaza]
-      ,([SUMGroupClassic]) [SUMGroupClassic]
-      ,([SUMGroupModa]) [SUMGroupModa]
-      ,([SUMGroupModul]) [SUMGroupModul]
-      ,([SUMGroupSouvenir]) [SUMGroupSouvenir]
-      ,([SUMGroupTrend]) [SUMGroupTrend]
-	  into PurchaseGrid1
-  FROM [Gold585].[dbo].[MonthMapping] m 
-  left join [Gold585].[dbo].[TempPurch3] a 
-  on [PurchaseDate] <= Period 
-  Where DAY(Period) <>15 and Period > '20160101' and QNTVisits = (Select Max(QNTVisits) from [TempPurch3] t Where a.PartnerID = t.PartnerID and a.Period > t.PurchaseDate  )
-  and Period < '20181130' -- and PartnerID = 5170116 
-  order by Period,PurchaseDate 
-
-  Select top 100 * from PurchaseGrid1 Where PartnerID = 5170116 order by PurchaseCode
-
- Select Period, Sum(IIF(EOMONTH([NEXTDate]) = EOMONTH(Period),1,0)) SumP  from PurchaseGrid1 Group by Period Order by Period
- 
-
- Select Max(QNTVisits) from [TempPurch3] t Where t.PartnerID = '5170116' and t.PurchaseDate < '20180301'
-
- Select * From [TempPurch3] Where PartnerID = '5170116' Order by PurchaseDate
- Select * From [TempPurch] Where PartnerID = '5170116' Order by PurchaseDate
- 
-
-
-
-
---drop table PurchaseGrid
+  drop table PurchaseGrid
   SELECT [ind],[Period],Month([Period]) Month
 	  ,MAX(PurchaseDate) PurchaseDate 
       ,[PartnerID]
@@ -627,13 +417,13 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
 	  into PurchaseGrid
   FROM [Gold585].[dbo].[MonthMapping] m 
   left join [Gold585].[dbo].[TempPurch3] a 
-  on [PurchaseDate]<= Period and Period > '20160901' and Period < '20181130'
+  on [PurchaseDate]<= Period and Period > '20160901' and Period < '20181230'
   Where DAY(Period) <>15 -- and PartnerID = 5170116 
   group by [ind],[Period],[PartnerID],[Sex],[CityID],[BirthDate],Month([Period])
   order by Period,PurchaseDate
 
 
-  Select Period, Sum(IIF(EOMONTH(PurchaseDate) = EOMONTH(Period),1,0)) SumP  from PurchaseGrid Group by Period Order by Period
+ -- Select Period, Sum(IIF(EOMONTH(PurchaseDate) = EOMONTH(Period),1,0)) SumP  from PurchaseGrid Group by Period Order by Period
   --скрипт для предсказания
   drop table PurchaseGridForPred
   	SELECT --TOP 1000 --[ind]
@@ -706,7 +496,7 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   order by Period
 
   
-  Select Sum(VisitInCurrentMonth) Visits, Sum(PoSMS) Sms,  Period  from PurchaseGridForPred Group by Period order by Period
+ -- Select Sum(VisitInCurrentMonth) Visits, Sum(PoSMS) Sms,  Period  from PurchaseGridForPred Group by Period order by Period
  
 
 
@@ -792,4 +582,14 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   Where DAY(Period) <>15 and Period > '20180101'
   group by  Period,[ind],[PartnerID]
 
+  /*
+  Select top 10 *
+  from Purchase
+  where 1=2
+
   Select 
+  PartnerID
+  From Purchase
+  Where SummaAfterDiscount > ALL
+
+  */
