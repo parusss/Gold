@@ -490,11 +490,12 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
       ,[SUMGroupSouvenir]
       ,[SUMGroupTrend]
 	  into PurchaseGridForPred
-  FROM [Gold585].[dbo].[PurchaseGrid1] a 
+  FROM [Gold585].[dbo].[PurchaseGrid] a 
   left join Temp11 b on a.PartnerID = b.PartnerID and MONTH(a.NextDate) = MONTH(b.[PurchaseDate]) and YEAR(a.NextDate) = YEAR(b.[PurchaseDate])
  -- Where a.partnerID = 1478881 --  [SMS_1] = 1
   order by Period
 
+  --Выполняется 34 минуты
   
  -- Select Sum(VisitInCurrentMonth) Visits, Sum(PoSMS) Sms,  Period  from PurchaseGridForPred Group by Period order by Period
  
@@ -505,7 +506,7 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
 
 
 
-
+ /*
   Select Count(*) from TempPurch1
   Select Count(*) from ForPredict
   --Select top 100 * from ForPredict where PartnerID = 5170116 order by [PurchaseDate]
@@ -581,7 +582,7 @@ Select a.[PurchaseDate],MAX(a.[PurchaseCode]) [PurchaseCode],a.[PartnerID],[Sex]
   left join Temp11 b on b.[PartnerID] = a.[PartnerID] and CAST(a.[PurchaseDate] AS DATE) > CAST(b.[PurchaseDate] AS DATE)
   Where DAY(Period) <>15 and Period > '20180101'
   group by  Period,[ind],[PartnerID]
-
+  */
   /*
   Select top 10 *
   from Purchase
